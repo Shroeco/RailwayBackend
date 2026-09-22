@@ -1,0 +1,40 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Railway.Api", "Railway.Api\Railway.Api.csproj", "{0DDE4D5F-1BC0-443D-BCDB-A12B105B5475}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Railway.Application", "Railway.Application\Railway.Application.csproj", "{F3DFE503-AFA3-45DF-A4F5-AE9261EAB2F7}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Railway.Domain", "Railway.Domain\Railway.Domain.csproj", "{6B9260D5-FF1B-409D-84BE-21412FCFEF43}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Railway.Infrastructure", "Railway.Infrastructure\Railway.Infrastructure.csproj", "{14CF2FA7-1189-4EA4-A173-9C681360C4E8}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{0DDE4D5F-1BC0-443D-BCDB-A12B105B5475}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0DDE4D5F-1BC0-443D-BCDB-A12B105B5475}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0DDE4D5F-1BC0-443D-BCDB-A12B105B5475}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0DDE4D5F-1BC0-443D-BCDB-A12B105B5475}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F3DFE503-AFA3-45DF-A4F5-AE9261EAB2F7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F3DFE503-AFA3-45DF-A4F5-AE9261EAB2F7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F3DFE503-AFA3-45DF-A4F5-AE9261EAB2F7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F3DFE503-AFA3-45DF-A4F5-AE9261EAB2F7}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6B9260D5-FF1B-409D-84BE-21412FCFEF43}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6B9260D5-FF1B-409D-84BE-21412FCFEF43}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6B9260D5-FF1B-409D-84BE-21412FCFEF43}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6B9260D5-FF1B-409D-84BE-21412FCFEF43}.Release|Any CPU.Build.0 = Release|Any CPU
+		{14CF2FA7-1189-4EA4-A173-9C681360C4E8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{14CF2FA7-1189-4EA4-A173-9C681360C4E8}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{14CF2FA7-1189-4EA4-A173-9C681360C4E8}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{14CF2FA7-1189-4EA4-A173-9C681360C4E8}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal
