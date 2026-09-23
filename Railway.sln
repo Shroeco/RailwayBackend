@@ -11,6 +11,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Railway.Domain", "Railway.D
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Railway.Infrastructure", "Railway.Infrastructure\Railway.Infrastructure.csproj", "{14CF2FA7-1189-4EA4-A173-9C681360C4E8}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Railway.Domain.Tests", "Railway.Domain.Tests\Railway.Domain.Tests.csproj", "{CC533330-78B7-4484-8411-F5D109D423A0}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -36,5 +38,9 @@ Global
 		{14CF2FA7-1189-4EA4-A173-9C681360C4E8}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{14CF2FA7-1189-4EA4-A173-9C681360C4E8}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{14CF2FA7-1189-4EA4-A173-9C681360C4E8}.Release|Any CPU.Build.0 = Release|Any CPU
+		{CC533330-78B7-4484-8411-F5D109D423A0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CC533330-78B7-4484-8411-F5D109D423A0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CC533330-78B7-4484-8411-F5D109D423A0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CC533330-78B7-4484-8411-F5D109D423A0}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
