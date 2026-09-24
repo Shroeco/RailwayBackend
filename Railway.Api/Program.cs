@@ -1,4 +1,17 @@
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage;
+using Railway.Infrastructure.Data;
+using Railway.Infrastructure.Data.Seed;
+using Railway.Application.Repositories;
+using Railway.Infrastructure.Persistence;
+
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.AddDbContext<RailwayDbContext>(options => options.UseNpgsql(builder.Configuration.GetConnectionString("RailwayDatabase")));
+
+builder.Services.AddScoped<IJourneyRepository, JourneyRepository>();
+builder.Services.AddScoped<IBookingRepository, BookingRepository>();
+builder.Services.AddScoped<ICustomerRepository, CustomerRepository>();
 
 builder.Services.AddControllers();
 
@@ -6,6 +19,15 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
+
+// Database test
+// using (var scope = app.Services.CreateScope())
+// {
+//     var dbContext = scope.ServiceProvider.GetRequiredService<RailwayDbContext>();
+
+//     Console.WriteLine($"Database provider: {dbContext.Database.ProviderName}");
+//     Console.WriteLine($"Database can connect {dbContext.Database.CanConnect()}");
+// }
 
 if (app.Environment.IsDevelopment())
 {
@@ -16,5 +38,11 @@ if (app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 
 app.MapControllers();
+
+using (var scope = app.Services.CreateScope())
+{
+    var dbContext = scope.ServiceProvider.GetRequiredService<RailwayDbContext>();
+    await RailwaySeedData.SeedAsync(dbContext);
+}
 
 app.Run();

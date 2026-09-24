@@ -63,4 +63,30 @@ public class JourneyTests
         Assert.Throws<ArgumentException>(() =>
             new Journey(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), DateTimeOffset.UtcNow, DateTimeOffset.UtcNow.AddHours(2), -1));
     }
+
+    [Fact]
+    public void ReserveSeat_should_decrease_available_seats()
+    {
+        var journey = CreateValidJourney();
+
+        journey.ReserveSeat();
+
+        Assert.Equal(4, journey.AvailableSeats);
+    }
+
+    [Fact]
+    public void ReserveSeat_should_throw_when_no_seats_are_available()
+    {
+        var journey = CreateValidJourney();
+
+        for (var i = 0; i < 5; i++)
+            journey.ReserveSeat();
+
+        Assert.Throws<InvalidOperationException>(() => journey.ReserveSeat());
+    }
+
+    private static Journey CreateValidJourney()
+    {
+        return new Journey(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), DateTimeOffset.UtcNow.AddHours(1), DateTimeOffset.UtcNow.AddHours(2), 5);
+    }
 }

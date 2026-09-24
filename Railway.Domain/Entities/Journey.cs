@@ -41,4 +41,12 @@ public sealed class Journey
         Capacity = capacity;
         AvailableSeats = capacity;
     }
+
+    public void ReserveSeat()
+    {
+        if (AvailableSeats <= 0)
+        throw new InvalidOperationException("No seats are available");
+
+        AvailableSeats--;
+    }
 }

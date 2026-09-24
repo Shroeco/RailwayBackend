@@ -24,6 +24,8 @@ public sealed class JourneyConfiguration : IEntityTypeConfiguration<Journey>
 
         builder.Property(journey => journey.AvailableSeats).IsRequired();
 
+        builder.Property<uint>("xmin").IsRowVersion();
+
         builder.HasOne<Station>().WithMany().HasForeignKey(journey => journey.OriginStationId).OnDelete(DeleteBehavior.Restrict);
 
         builder.HasOne<Station>().WithMany().HasForeignKey(journey => journey.DestinationStationId).OnDelete(DeleteBehavior.Restrict);
