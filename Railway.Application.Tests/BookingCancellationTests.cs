@@ -1,5 +1,6 @@
 using Railway.Application.Repositories;
 using Railway.Application.Services;
+using Railway.Application.Exceptions;
 using Railway.Domain.Entities;
 
 namespace Railway.Application.Tests;
@@ -15,7 +16,7 @@ public class BookingCancellationServiceTests
 
         var bookingId = Guid.NewGuid();
 
-        var exception = await Assert.ThrowsAsync<InvalidOperationException>(() => service.CancelAsync(bookingId));
+        var exception = await Assert.ThrowsAsync<ResourceNotFoundException>(() => service.CancelAsync(Guid.NewGuid()));
 
         Assert.Equal("Booking was not found.", exception.Message);
     }

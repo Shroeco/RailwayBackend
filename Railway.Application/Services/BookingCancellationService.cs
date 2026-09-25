@@ -1,4 +1,5 @@
 using Railway.Application.Repositories;
+using Railway.Application.Exceptions;
 
 namespace Railway.Application.Services;
 
@@ -17,7 +18,7 @@ public sealed class BookingCancellationService : IBookingCancellationService
             .GetByIdAsync(bookingId);
 
         if (booking is null)
-            throw new InvalidOperationException("Booking was not found.");
+            throw new ResourceNotFoundException("Booking");
 
         booking.Cancel();
 

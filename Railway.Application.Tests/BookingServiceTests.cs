@@ -24,7 +24,7 @@ public class BookingServiceTests
             FareId = Guid.NewGuid()
         };
 
-        var exception = await Assert.ThrowsAsync<InvalidOperationException>(() => service.CreateAsync(request));
+        var exception = await Assert.ThrowsAsync<ResourceNotFoundException>(() => service.CreateAsync(request));
 
         Assert.Equal("Customer was not found.", exception.Message);
     }
@@ -47,7 +47,7 @@ public class BookingServiceTests
             FareId = Guid.NewGuid()
         };
 
-        var exception = await Assert.ThrowsAsync<InvalidOperationException>(() => service.CreateAsync(request));
+        var exception = await Assert.ThrowsAsync<ResourceNotFoundException>(() => service.CreateAsync(request));
 
         Assert.Equal("Journey was not found.", exception.Message);
     }
@@ -111,9 +111,9 @@ public class BookingServiceTests
             FareId = fareId
         };
 
-        var exception = await Assert.ThrowsAsync<InvalidOperationException>(() => service.CreateAsync(request));
+        var exception = await Assert.ThrowsAsync<BookingUnavailableException>(() => service.CreateAsync(request));
 
-        Assert.Equal("No seats are available", exception.Message);
+        Assert.Equal("The journey has no available seats.", exception.Message);
     }
 
     [Fact]

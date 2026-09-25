@@ -7,6 +7,8 @@ using Railway.Infrastructure.Persistence;
 using Railway.Application.Services;
 using Railway.Infrastructure.Carriers.Avanti;
 using Railway.Infrastructure.Carriers.Lner;
+using Railway.Api.ExceptionHandling;
+using Railway.Api.Middleware;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -22,6 +24,9 @@ builder.Services.AddScoped<IBookingCancellationService, BookingCancellationServi
 
 builder.Services.AddScoped<ICarrierJourneyProvider, AvantiJourneyProvider>();
 builder.Services.AddScoped<ICarrierJourneyProvider, LnerJourneyProvider>();
+
+builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
+builder.Services.AddProblemDetails();
 
 builder.Services.AddControllers();
 
@@ -39,13 +44,29 @@ var app = builder.Build();
 //     Console.WriteLine($"Database can connect {dbContext.Database.CanConnect()}");
 // }
 
+// if (app.Environment.IsDevelopment())
+// {
+//     app.UseSwagger();
+//     app.UseSwaggerUI();
+// }
+
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
-    app.UseSwaggerUI();
+
+    app.UseSwaggerUI(options =>
+    {
+        options.SwaggerEndpoint(
+            "/swagger/v1/swagger.json",
+            "Railway API V1");
+    });
 }
 
 app.UseHttpsRedirection();
+
+app.UseMiddleware<RequestLoggingMiddleware>();
+
+app.UseExceptionHandler();
 
 app.MapControllers();
 

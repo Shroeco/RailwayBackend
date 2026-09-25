@@ -15,6 +15,20 @@ public sealed class JourneyService : IJourneyService
 
     public async Task<IReadOnlyList<JourneyResponse>> SearchAsync(JourneySearchRequest request)
     {
+        if (request.OriginStationId == Guid.Empty)
+            throw new ArgumentException("Origin station ID is required.");
+
+        if (request.DestinationStationId == Guid.Empty)
+            throw new ArgumentException("Destination station ID is required.");
+
+        if (request.OriginStationId == request.DestinationStationId)
+            throw new ArgumentException(
+                "Origin and destination stations must be different.");
+
+        if (request.DepartureFrom > request.DepartureTo)
+            throw new ArgumentException(
+                "DepartureFrom must be earlier than or equal to DepartureTo.");
+                
         var journeys = await _journeyRepository.SearchAsync(request.OriginStationId, request.DestinationStationId, request.DepartureFrom, request.DepartureTo);
 
         return journeys.Select(MapJourney).ToList();

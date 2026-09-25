@@ -28,7 +28,7 @@ namespace Railway.Infrastructure.Data;
     public async Task UpdateAsync(Booking booking)
     {
         _context.Bookings.Update(booking);
-        await Task.CompletedTask;
+        await _context.SaveChangesAsync();
     }
 
     public async Task CreateBookingTransactionAsync(Booking booking, Journey journey)

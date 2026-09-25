@@ -24,6 +24,8 @@ public static class RailwaySeedData
 
         var midlandsRail = new Carrier(Guid.NewGuid(), "MRL", "Midlands Rail");
 
+        var testCustomer = new Customer(Guid.NewGuid(), "Test Customer", "test.customer@example.com");
+
         var eustonToBirminham = new Journey(Guid.NewGuid(), euston.Id, birmingham.Id, DateTimeOffset.UtcNow.AddDays(1).AddHours(8), DateTimeOffset.UtcNow.AddDays(1).AddHours(9), 100);
 
         var eustonToMiltonKeynes = new Journey(Guid.NewGuid(), euston.Id, miltonKeynes.Id, DateTimeOffset.UtcNow.AddDays(1).AddHours(9), DateTimeOffset.UtcNow.AddDays(1).AddHours(9).AddMinutes(45), 80);
@@ -63,6 +65,8 @@ public static class RailwaySeedData
         context.Stations.AddRange(euston, birmingham, manchester, miltonKeynes, liverpool);
 
         context.Carriers.AddRange(westCoastRail, midlandsRail);
+
+        context.Customers.Add(testCustomer);
 
         context.Journeys.AddRange(eustonToBirminham, eustonToMiltonKeynes, eustonToManchester, birminghamToManchester, birminghamToLiverpool);
 

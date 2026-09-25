@@ -5,4 +5,6 @@ namespace Railway.Application.Services;
 public interface IBookingService
 {
     Task<BookingResponse> CreateAsync(CreateBookingRequest request);
+
+    Task<BookingResponse?> GetByIdAsync(Guid bookingId);
 }
