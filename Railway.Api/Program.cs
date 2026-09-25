@@ -5,6 +5,8 @@ using Railway.Infrastructure.Data.Seed;
 using Railway.Application.Repositories;
 using Railway.Infrastructure.Persistence;
 using Railway.Application.Services;
+using Railway.Infrastructure.Carriers.Avanti;
+using Railway.Infrastructure.Carriers.Lner;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -17,6 +19,9 @@ builder.Services.AddScoped<ICustomerRepository, CustomerRepository>();
 builder.Services.AddScoped<IJourneyService, JourneyService>();
 builder.Services.AddScoped<IBookingService, BookingService>();
 builder.Services.AddScoped<IBookingCancellationService, BookingCancellationService>();
+
+builder.Services.AddScoped<ICarrierJourneyProvider, AvantiJourneyProvider>();
+builder.Services.AddScoped<ICarrierJourneyProvider, LnerJourneyProvider>();
 
 builder.Services.AddControllers();
 
