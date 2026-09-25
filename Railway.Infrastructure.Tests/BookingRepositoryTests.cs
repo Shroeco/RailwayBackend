@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Railway.Application.Exceptions;
 using Railway.Domain.Entities;
 using Railway.Infrastructure.Data;
 using Railway.Infrastructure.Persistence;
@@ -239,7 +240,8 @@ public class BookingRepositoryTests
 
             await repositoryA.CreateBookingTransactionAsync(bookingA, journeyA);
 
-            await Assert.ThrowsAsync<DbUpdateConcurrencyException>(() => repositoryB.CreateBookingTransactionAsync(bookingB, journeyB));
+            //await Assert.ThrowsAsync<DbUpdateConcurrencyException>(() => repositoryB.CreateBookingTransactionAsync(bookingB, journeyB));
+            await Assert.ThrowsAsync<BookingConflictException>(() => repositoryB.CreateBookingTransactionAsync(bookingB, journeyB));
 
             await using (var verificationContext = CreateContext())
             {

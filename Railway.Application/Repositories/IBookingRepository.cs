@@ -8,5 +8,7 @@ public interface IBookingRepository
 
     Task AddAsync(Booking booking);
 
+    Task UpdateAsync(Booking booking);
+
     Task CreateBookingTransactionAsync(Booking booking, Journey journey);
 }

@@ -4,6 +4,7 @@ using Railway.Infrastructure.Data;
 using Railway.Infrastructure.Data.Seed;
 using Railway.Application.Repositories;
 using Railway.Infrastructure.Persistence;
+using Railway.Application.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -12,6 +13,10 @@ builder.Services.AddDbContext<RailwayDbContext>(options => options.UseNpgsql(bui
 builder.Services.AddScoped<IJourneyRepository, JourneyRepository>();
 builder.Services.AddScoped<IBookingRepository, BookingRepository>();
 builder.Services.AddScoped<ICustomerRepository, CustomerRepository>();
+
+builder.Services.AddScoped<IJourneyService, JourneyService>();
+builder.Services.AddScoped<IBookingService, BookingService>();
+builder.Services.AddScoped<IBookingCancellationService, BookingCancellationService>();
 
 builder.Services.AddControllers();
 

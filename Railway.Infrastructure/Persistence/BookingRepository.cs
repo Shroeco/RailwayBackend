@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Railway.Application.Exceptions;
 using Railway.Application.Repositories;
 using Railway.Domain.Entities;
 using Railway.Infrastructure.Data;
@@ -24,6 +25,12 @@ namespace Railway.Infrastructure.Data;
         await _context.Bookings.AddAsync(booking);
     }
 
+    public async Task UpdateAsync(Booking booking)
+    {
+        _context.Bookings.Update(booking);
+        await Task.CompletedTask;
+    }
+
     public async Task CreateBookingTransactionAsync(Booking booking, Journey journey)
     {
         await using var transaction = await _context.Database.BeginTransactionAsync();
@@ -36,6 +43,12 @@ namespace Railway.Infrastructure.Data;
             await _context.SaveChangesAsync();
 
             await transaction.CommitAsync();
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            await transaction.RollbackAsync();
+
+            throw new BookingConflictException();
         }
         catch
         {
