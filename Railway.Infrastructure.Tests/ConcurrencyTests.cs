@@ -6,8 +6,9 @@ namespace Railway.Infrastructure.Tests;
 
 public class ConcurrencyTests
 {
-    private const string ConnectionString =
-        "Host=localhost;Port=5432;Database=railway;Username=railway;Password=railway_dev_password";
+    // private const string ConnectionString = "Host=localhost;Port=5432;Database=railway;Username=railway;Password=railway_dev_password";
+
+    private static readonly PostgresTestFixture Fixture = new();
 
     [Fact]
     public async Task Concurrent_updates_to_same_journey_should_raise_concurrency_exception()
@@ -66,10 +67,15 @@ public class ConcurrencyTests
         }
     }
 
+    // private static RailwayDbContext CreateContext()
+    // {
+    //     var options = new DbContextOptionsBuilder<RailwayDbContext>().UseNpgsql(ConnectionString).Options;
+
+    //     return new RailwayDbContext(options);
+    // }
+
     private static RailwayDbContext CreateContext()
     {
-        var options = new DbContextOptionsBuilder<RailwayDbContext>().UseNpgsql(ConnectionString).Options;
-
-        return new RailwayDbContext(options);
+        return Fixture.CreateContext();
     }
 }

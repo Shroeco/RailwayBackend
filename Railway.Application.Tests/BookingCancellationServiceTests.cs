@@ -16,7 +16,7 @@ public class BookingCancellationServiceTests
 
         var bookingId = Guid.NewGuid();
 
-        var exception = await Assert.ThrowsAsync<ResourceNotFoundException>(() => service.CancelAsync(Guid.NewGuid()));
+        var exception = await Assert.ThrowsAsync<ResourceNotFoundException>(() => service.CancelAsync(bookingId));
 
         Assert.Equal("Booking was not found.", exception.Message);
     }
@@ -35,6 +35,23 @@ public class BookingCancellationServiceTests
         Assert.Equal(Railway.Domain.Enums.BookingStatus.Cancelled, booking.Status);
 
         Assert.Same(booking, bookingRepository.UpdatedBooking);
+    }
+
+    [Fact]
+    public async Task CancelAsync_should_throw_when_booking_is_already_cancelled()
+    {
+        var booking = new Booking(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), DateTimeOffset.UtcNow);
+
+        booking.Cancel();
+
+        var bookingRepository = new FakeBookingRepository(booking);
+        var service = new BookingCancellationService(bookingRepository);
+
+        var exception = await Assert.ThrowsAsync<InvalidOperationException>(() => service.CancelAsync(booking.Id));
+
+        Assert.Equal("Booking is already cancelled", exception.Message);
+
+        Assert.Null(bookingRepository.UpdatedBooking);
     }
 
     private sealed class FakeBookingRepository : IBookingRepository

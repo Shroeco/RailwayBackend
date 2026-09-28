@@ -191,6 +191,57 @@ public class BookingServiceTests
         Assert.Equal(9, journey.AvailableSeats);
     }
 
+    [Fact]
+    public async Task CreateAsync_should_throw_when_customer_id_is_empty()
+    {
+        var service = new BookingService(new FakeCustomerRepository(), new FakeJourneyRepository(), new FakeBookingRepository());
+
+        var request = new CreateBookingRequest
+        {
+            CustomerId = Guid.Empty,
+            JourneyId = Guid.NewGuid(),
+            FareId = Guid.NewGuid()
+        };
+
+        var exception = await Assert.ThrowsAsync<ArgumentException>(() => service.CreateAsync(request));
+
+        Assert.Equal("Customer ID is required.", exception.Message);
+    }
+
+    [Fact]
+    public async Task CreateAsync_should_throw_when_journey_id_is_empty()
+    {
+        var service = new BookingService(new FakeCustomerRepository(), new FakeJourneyRepository(), new FakeBookingRepository());
+
+        var request = new CreateBookingRequest
+        {
+            CustomerId = Guid.NewGuid(),
+            JourneyId = Guid.Empty,
+            FareId = Guid.NewGuid()
+        };
+
+        var exception = await Assert.ThrowsAsync<ArgumentException>(() => service.CreateAsync(request));
+
+        Assert.Equal("Journey ID is required.", exception.Message);
+    }
+
+    [Fact]
+    public async Task CreateAsync_should_throw_when_fare_id_is_empty()
+    {
+        var service = new BookingService(new FakeCustomerRepository(), new FakeJourneyRepository(), new FakeBookingRepository());
+
+        var request = new CreateBookingRequest
+        {
+            CustomerId = Guid.NewGuid(),
+            JourneyId = Guid.NewGuid(),
+            FareId = Guid.Empty
+        };
+
+        var exception = await Assert.ThrowsAsync<ArgumentException>(() => service.CreateAsync(request));
+
+        Assert.Equal("Fare ID is required.", exception.Message);
+    }
+
     private sealed class FakeCustomerRepository : ICustomerRepository
     {
         private readonly Customer? _customer;

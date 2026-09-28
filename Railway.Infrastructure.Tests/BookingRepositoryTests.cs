@@ -8,7 +8,9 @@ namespace Railway.Infrastructure.Tests;
 
 public class BookingRepositoryTests
 {
-    private const string ConnectionString = "Host=localhost;Port=5432;Database=railway;Username=railway;Password=railway_dev_password";
+    // private const string ConnectionString = "Host=localhost;Port=5432;Database=railway;Username=railway;Password=railway_dev_password";
+
+    private static readonly PostgresTestFixture Fixture = new();
 
     [Fact]
     public async Task CreateBookingTransactionAsync_should_persist_booking_and_decrement_available_seats()
@@ -77,14 +79,18 @@ public class BookingRepositoryTests
         }
     }
 
+    // private static RailwayDbContext CreateContext()
+    // {
+    //     var options = new DbContextOptionsBuilder<RailwayDbContext>().UseNpgsql(ConnectionString).Options;
+
+    //     return new RailwayDbContext(options);
+    // }
     private static RailwayDbContext CreateContext()
     {
-        var options = new DbContextOptionsBuilder<RailwayDbContext>().UseNpgsql(ConnectionString).Options;
-
-        return new RailwayDbContext(options);
+        return Fixture.CreateContext();
     }
 
-    private static async Task CleanupAsync(Guid journeyId, Guid originStationId, Guid destinationStationId, Guid customerId)
+    private static async Task CleanupAsync(Guid journeyId, Guid originStationId, Guid destinationStationId, Guid? customerId = null)
     {
         await using var context = CreateContext();
 
@@ -101,10 +107,18 @@ public class BookingRepositoryTests
         if (journey is not null)
             context.Journeys.Remove(journey);
         
-        var customer = await context.Customers.SingleOrDefaultAsync(customer => customer.Id == customerId);
+        // var customer = await context.Customers.SingleOrDefaultAsync(customer => customer.Id == customerId);
 
-        if (customer is not null)
-            context.Customers.Remove(customer);
+        // if (customer is not null)
+        //     context.Customers.Remove(customer);
+
+        if (customerId.HasValue)
+        {
+            var customer = await context.Customers.SingleOrDefaultAsync(customer => customer.Id == customerId.Value);
+
+            if (customer is not null)
+                context.Customers.Remove(customer);
+        }
 
         var stations = await context.Stations.Where(station => station.Id == originStationId || station.Id == destinationStationId).ToListAsync();
 
@@ -268,4 +282,258 @@ public class BookingRepositoryTests
             await cleanupContext.SaveChangesAsync();
         }
     }
+
+    [Fact]
+    public async Task Test_database_should_be_available()
+    {
+        await Fixture.EnsureDatabaseAvailableAsync();
+    }
+
+    [Fact]
+    public async Task PostgreSQL_should_persist_and_read_back_a_journey()
+    {
+        var journeyId = Guid.NewGuid();
+        var originStationId = Guid.NewGuid();
+        var destinationStationId = Guid.NewGuid();
+
+        await using (var setupContext = CreateContext())
+        {
+            var originCode = $"A{journeyId.ToString()[..8]}";
+            var destinationCode = $"B{journeyId.ToString()[..8]}";
+
+            var origin = new Station(originStationId, originCode, "Origin Station");
+
+            var destination = new Station(destinationStationId, destinationCode, "Destination Station");
+
+            var journey = new Journey(journeyId, originStationId, destinationStationId, DateTimeOffset.UtcNow.AddHours(1), DateTimeOffset.UtcNow.AddHours(2), 10);
+
+            setupContext.Stations.AddRange(origin, destination);
+            setupContext.Journeys.Add(journey);
+
+            await setupContext.SaveChangesAsync();
+        }
+
+        try
+        {
+            await using var verificationContext = CreateContext();
+
+            var savedJourney = await verificationContext.Journeys.SingleAsync(journey => journey.Id == journeyId);
+
+            Assert.Equal(journeyId, savedJourney.Id);
+            Assert.Equal(originStationId, savedJourney.OriginStationId);
+            Assert.Equal(destinationStationId, savedJourney.DestinationStationId);
+            Assert.Equal(10, savedJourney.AvailableSeats);
+        }
+        finally
+        {
+            await CleanupAsync(journeyId, originStationId, destinationStationId);
+        }
+    }
+
+    [Fact]
+    public async Task CleanupAsync_should_only_remove_test_owned_data()
+    {
+        var journeyAId = Guid.NewGuid();
+        var originAId = Guid.NewGuid();
+        var destinationAId = Guid.NewGuid();
+
+        var journeyBId = Guid.NewGuid();
+        var originBId = Guid.NewGuid();
+        var destinationBId = Guid.NewGuid();
+
+        await using (var setupContext = CreateContext())
+        {
+            var originA = new Station(originAId, $"A{journeyAId.ToString()[..8]}", "Origin A");
+
+            var destinationA = new Station(destinationAId, $"B{journeyAId.ToString()[..8]}", "Destination A");
+
+            var originB = new Station(originBId, $"A{journeyBId.ToString()[..8]}", "Origin B");
+
+            var destinationB = new Station(destinationBId, $"B{journeyBId.ToString()[..8]}", "Destination B");
+
+            var journeyA = new Journey(journeyAId, originAId, destinationAId, DateTimeOffset.UtcNow.AddHours(1), DateTimeOffset.UtcNow.AddHours(2), 5);
+
+            var journeyB = new Journey(journeyBId, originBId, destinationBId, DateTimeOffset.UtcNow.AddHours(3), DateTimeOffset.UtcNow.AddHours(4), 5);
+
+            setupContext.Stations.AddRange(originA, destinationA, originB, destinationB);
+
+            setupContext.Journeys.AddRange(journeyA, journeyB);
+
+            await setupContext.SaveChangesAsync();
+        }
+
+        try
+        {
+            await CleanupAsync(journeyAId, originAId, destinationAId);
+
+            await using var verificationContext = CreateContext();
+
+            var journeyAExists = await verificationContext.Journeys.AnyAsync(journey => journey.Id == journeyAId);
+
+            var journeyBExists = await verificationContext.Journeys.AnyAsync(journey => journey.Id == journeyBId);
+
+            var originBExists = await verificationContext.Stations.AnyAsync(station => station.Id == originBId);
+
+            var destinationBExists = await verificationContext.Stations.AnyAsync(station => station.Id == destinationBId);
+
+            Assert.False(journeyAExists);
+            Assert.True(journeyBExists);
+            Assert.True(originBExists);
+            Assert.True(destinationBExists);
+        }
+        finally
+        {
+            await CleanupAsync(journeyBId, originBId, destinationBId);
+        }
+    }
+
+    [Fact]
+    public async Task GetByIdAsync_should_return_existing_booking()
+    {
+        var journeyId = Guid.NewGuid();
+        var originStationId = Guid.NewGuid();
+        var destinationStationId = Guid.NewGuid();
+        var customerId = Guid.NewGuid();
+        var fareId = Guid.NewGuid();
+        var bookingId = Guid.NewGuid();
+
+        try
+        {
+            await using (var setupContext = CreateContext())
+            {
+                var origin = new Station(originStationId, $"A{journeyId.ToString()[..8]}", "Origin Station");
+
+                var destination = new Station(destinationStationId, $"B{journeyId.ToString()[..8]}", "Destination Station");
+
+                var customer = new Customer(customerId, "Retrieval Customer", $"retrieval-{customerId}@example.com");
+
+                var journey = new Journey(journeyId, originStationId, destinationStationId, DateTimeOffset.UtcNow.AddHours(1), DateTimeOffset.UtcNow.AddHours(2), 5);
+
+                var fare = new Fare(fareId, journeyId, "Standard", 25.00m);
+
+                var booking = new Booking(bookingId, customerId, journeyId, fareId, DateTimeOffset.UtcNow);
+
+                setupContext.Stations.AddRange(origin, destination);
+                setupContext.Customers.Add(customer);
+                setupContext.Journeys.Add(journey);
+                setupContext.Fares.Add(fare);
+                setupContext.Bookings.Add(booking);
+
+                await setupContext.SaveChangesAsync();
+            }
+
+            await using var context = CreateContext();
+
+            var repository = new BookingRepository(context);
+
+            var Retrievedooking = await repository.GetByIdAsync(bookingId);
+
+            Assert.NotNull(Retrievedooking);
+            Assert.Equal(bookingId, Retrievedooking.Id);
+            Assert.Equal(customerId, Retrievedooking.CustomerId);
+            Assert.Equal(journeyId, Retrievedooking.JourneyId);
+            Assert.Equal(fareId, Retrievedooking.FareId);
+        }
+        finally
+        {
+            await CleanupAsync(journeyId, originStationId, destinationStationId, customerId);
+        }
+    }
+
+    [Fact]
+    public async Task UpdateAsync_should_persist_booking_cancellation()
+    {
+        var journeyId = Guid.NewGuid();
+        var originStationId = Guid.NewGuid();
+        var destinationStationId = Guid.NewGuid();
+        var customerId = Guid.NewGuid();
+        var fareId = Guid.NewGuid();
+        var bookingId = Guid.NewGuid();
+
+        try
+        {
+            await using (var setupContext = CreateContext())
+            {
+                var origin = new Station(originStationId, $"A{journeyId.ToString()[..8]}", "Origin Station");
+
+                var destination = new Station(destinationStationId, $"B{journeyId.ToString()[..8]}", "Destination Station");
+
+                var customer = new Customer(customerId, "Cancellation Customer", $"cancellation-{customerId}@example.com");
+
+                var journey = new Journey(journeyId, originStationId, destinationStationId, DateTimeOffset.UtcNow.AddHours(1), DateTimeOffset.UtcNow.AddHours(2), 5);
+
+                var fare = new Fare(fareId, journeyId, "Standard", 25.00m);
+
+                var booking = new Booking(bookingId, customerId, journeyId, fareId, DateTimeOffset.UtcNow);
+
+                setupContext.Stations.AddRange(origin, destination);
+                setupContext.Customers.Add(customer);
+                setupContext.Journeys.Add(journey);
+                setupContext.Fares.Add(fare);
+                setupContext.Bookings.Add(booking);
+
+                await setupContext.SaveChangesAsync();
+            }
+
+            await using (var context = CreateContext())
+            {
+                var repository = new BookingRepository(context);
+
+                var booking = await repository.GetByIdAsync(bookingId);
+
+                Assert.NotNull(booking);
+
+                booking.Cancel();
+
+                await repository.UpdateAsync(booking);
+            }
+
+            await using (var verificationContext = CreateContext())
+            {
+                var savedBooking = await verificationContext.Bookings.SingleAsync(booking => booking.Id == bookingId);
+
+                Assert.Equal(Railway.Domain.Enums.BookingStatus.Cancelled, savedBooking.Status);
+            }
+        }
+        finally
+        {
+            await CleanupAsync(journeyId, originStationId, destinationStationId, customerId);
+        }
+    }
+
+    [Fact]
+    public async Task Database_should_reject_duplicate_customer_email()
+    {
+        var firstCustomerId = Guid.NewGuid();
+        var secondCustomerId = Guid.NewGuid();
+        var email = $"duplicate-{Guid.NewGuid()}@example.com";
+
+        try
+        {
+            await using var context = CreateContext();
+
+            var firstCustomer = new Customer(firstCustomerId, "First Customer", email);
+
+            var secondCustomer = new Customer(secondCustomerId, "Second Customer", email);
+
+            context.Customers.Add(firstCustomer);
+
+            await context.SaveChangesAsync();
+
+            context.Customers.Add(secondCustomer);
+
+            await Assert.ThrowsAsync<DbUpdateException>(() => context.SaveChangesAsync());
+        }
+        finally
+        {
+            await using var cleanupContext = CreateContext();
+
+            var customers = await cleanupContext.Customers.Where(customer => customer.Id == firstCustomerId || customer.Id == secondCustomerId).ToListAsync();
+
+            cleanupContext.Customers.RemoveRange(customers);
+
+            await cleanupContext.SaveChangesAsync();
+        }
+    }
+
 }
