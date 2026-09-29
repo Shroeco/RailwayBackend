@@ -5,6 +5,8 @@ namespace Railway.Infrastructure.Tests;
 
 public sealed class PostgresTestFixture : IAsyncLifetime
 {
+    private static readonly SemaphoreSlim MigrationLock = new(1, 1);
+
     private static readonly string ConnectionString = Environment.GetEnvironmentVariable("ConnectionStrings__RailwayDatabase") ?? "Host=localhost;Port=5432;Database=railway;Username=railway;Password=railway_dev_password";
 
     public async Task InitializeAsync()
@@ -19,14 +21,23 @@ public sealed class PostgresTestFixture : IAsyncLifetime
 
     public async Task EnsureDatabaseAvailableAsync()
     {
-        await using var context = CreateContext();
+        await MigrationLock.WaitAsync();
 
-        if (!await context.Database.CanConnectAsync())
+        try
         {
-            throw new InvalidOperationException("The PostgreSQL integration-test database is unavailable.");
-        }
+            await using var context = CreateContext();
 
-        await context.Database.MigrateAsync();
+            if (!await context.Database.CanConnectAsync())
+            {
+                throw new InvalidOperationException("The PostgreSQL integration-test database is unavailable.");
+            }
+
+            await context.Database.MigrateAsync();
+        }
+        finally
+        {
+            MigrationLock.Release();
+        }
     }
 
     public RailwayDbContext CreateContext()
