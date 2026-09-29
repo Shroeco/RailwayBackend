@@ -1,0 +1,61 @@
+name: Railway CI
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    env:
+      ConnectionStrings__RailwayDatabase: "Host=localhost;Port=5432;Database=railway_test;Username=railway;Password=railway_test_password"
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: railway_test
+          POSTGRES_USER: railway
+          POSTGRES_PASSWORD: railway_test_password
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U railway -d railway_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup .NET 8
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Restore dependencies
+        run: dotnet restore
+
+      - name: Build solution
+        run: dotnet build --configuration Release --no-restore --warnaserror
+
+      - name: Run Domain tests
+        run: dotnet test Railway.Domain.Tests/Railway.Domain.Tests.csproj --configuration Release --no-build
+
+      - name: Run Application tests
+        run: dotnet test Railway.Application.Tests/Railway.Application.Tests.csproj --configuration Release --no-build
+
+      - name: Run Infrastructure tests
+        run: dotnet test Railway.Infrastructure.Tests/Railway.Infrastructure.Tests.csproj --configuration Release --no-build
+
+      - name: Run API tests
+        run: dotnet test Railway.Api.Tests/Railway.Api.Tests.csproj --configuration Release --no-build
+
+      - name: Build Railway API Docker image
+        run: docker build -f Railway.Api/Dockerfile -t railway-api:ci .
