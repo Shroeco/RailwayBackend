@@ -73,9 +73,9 @@ app.MapControllers();
 if (!app.Environment.IsEnvironment("Testing"))
 {
     using var scope = app.Services.CreateScope();
-
     var dbContext = scope.ServiceProvider.GetRequiredService<RailwayDbContext>();
 
+    await dbContext.Database.MigrateAsync();
     await RailwaySeedData.SeedAsync(dbContext);
 }
 
