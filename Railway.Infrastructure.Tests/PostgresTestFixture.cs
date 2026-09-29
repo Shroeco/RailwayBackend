@@ -5,7 +5,7 @@ namespace Railway.Infrastructure.Tests;
 
 public sealed class PostgresTestFixture
 {
-    private const string ConnectionString = "Host=localhost;Port=5432;Database=railway;Username=railway;Password=railway_dev_password";
+    private static readonly string ConnectionString = Environment.GetEnvironmentVariable("ConnectionStrings__RailwayDatabase") ?? "Host=localhost;Port=5432;Database=railway;Username=railway;Password=railway_dev_password";
 
     public async Task EnsureDatabaseAvailableAsync()
     {
