@@ -17,7 +17,13 @@ public sealed class CorrelationIdMiddleware
     {
         var correlationId = context.Request.Headers.TryGetValue(CorrelationIdHeader, out var existingCorrelationId) && !string.IsNullOrWhiteSpace(existingCorrelationId) ? existingCorrelationId.ToString() : Guid.NewGuid().ToString();
 
-        context.Response.Headers[CorrelationIdHeader] = correlationId;
+        context.Items["CorrelationId"] = correlationId;
+
+        context.Response.OnStarting(() =>
+        {
+            context.Response.Headers[CorrelationIdHeader] = correlationId;
+            return Task.CompletedTask;
+        });
 
         using (_logger.BeginScope(new Dictionary<string, object>{["CorrelationId"] = correlationId}))
         {

@@ -25,7 +25,7 @@ public sealed class RequestLoggingMiddleware
         {
             stopwatch.Stop();
 
-            var correlationId = context.Response.Headers["X-Correlation-ID"].ToString();
+            var correlationId = context.Items["CorrelationId"]?.ToString() ?? "unknown";
 
             var logLevel = context.Response.StatusCode >= 500 ? LogLevel.Error : LogLevel.Information;
 

@@ -2,10 +2,15 @@ using System.Net;
 using System.Net.Http.Json;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Http;
 using Railway.Application.DTO;
 using Railway.Domain.Entities;
 using Railway.Domain.Enums;
 using Railway.Infrastructure.Data;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.Extensions.DependencyInjection.Extensions;
+using Railway.Application.Services;
 
 namespace Railway.Api.Tests;
 
@@ -481,6 +486,115 @@ public sealed class BookingEndpointsTests
             context.Stations.RemoveRange(stations);
 
             await context.SaveChangesAsync();
+        }
+    }
+
+    [Fact]
+    public async Task Create_should_return_problem_details_with_correlation_id_for_invalid_request()
+    {
+        await using var factory = new CustomWebApplicationFactory();
+        using var client = factory.CreateClient();
+
+        const string correlationId = "booking-error-test";
+
+        client.DefaultRequestHeaders.Add("X-Correlation-ID", correlationId);
+
+        var request = new CreateBookingRequest
+        {
+            CustomerId = Guid.Empty,
+            JourneyId = Guid.Empty,
+            FareId = Guid.Empty
+        };
+
+        var response = await client.PostAsJsonAsync("/api/bookings", request);
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+
+        Assert.True(response.Headers.TryGetValues("X-Correlation-ID", out var correlationHeaderValues));
+
+        Assert.Equal(correlationId, Assert.Single(correlationHeaderValues));
+
+        var problemDetails = await response.Content.ReadFromJsonAsync<ProblemDetails>();
+
+        Assert.NotNull(problemDetails);
+
+        Assert.Equal(StatusCodes.Status400BadRequest, problemDetails.Status);
+
+        Assert.Equal("Bad Request", problemDetails.Title);
+
+        Assert.Equal("Customer ID is required.", problemDetails.Detail);
+
+        Assert.True(problemDetails.Extensions.TryGetValue("correlationId", out var correlationIdExtension));
+
+        Assert.NotNull(correlationIdExtension);
+
+        Assert.Equal(correlationId, correlationIdExtension.ToString());
+    }
+
+    [Fact]
+    public async Task Create_should_return_safe_problem_details_for_unexpected_exception()
+    {
+        await using var baseFactory = new CustomWebApplicationFactory();
+
+        await using var factory = baseFactory.WithWebHostBuilder(builder =>
+        {
+            builder.ConfigureServices(services =>
+            {
+                services.RemoveAll<IBookingService>();
+                services.AddScoped<IBookingService, ThrowingBookingService>();
+            });
+        });
+
+        using var client = factory.CreateClient();
+
+        const string correlationId = "unexpected-error-test";
+
+        client.DefaultRequestHeaders.Add("X-Correlation-ID", correlationId);
+
+        var request = new CreateBookingRequest
+        {
+            CustomerId = Guid.NewGuid(),
+            JourneyId = Guid.NewGuid(),
+            FareId = Guid.NewGuid()
+        };
+
+        var response = await client.PostAsJsonAsync("/api/bookings", request);
+
+        Assert.Equal(HttpStatusCode.InternalServerError, response.StatusCode);
+
+        Assert.True(response.Headers.TryGetValues("X-Correlation-ID", out var correlationHeaderValues));
+
+        Assert.Equal(correlationId, Assert.Single(correlationHeaderValues));
+
+        var problemDetails = await response.Content.ReadFromJsonAsync<ProblemDetails>();
+
+        Assert.NotNull(problemDetails);
+
+        Assert.Equal(StatusCodes.Status500InternalServerError, problemDetails.Status);
+
+        Assert.Equal("Internal Server Error", problemDetails.Title);
+
+        Assert.Equal("An unexpected error occurred.", problemDetails.Detail);
+
+        Assert.True(problemDetails.Extensions.TryGetValue("correlationId", out var correlationIdExtension));
+
+        Assert.NotNull(correlationIdExtension);
+
+        Assert.Equal(correlationId, correlationIdExtension.ToString());
+
+        Assert.DoesNotContain("Test unexpected exception", await response.Content.ReadAsStringAsync());
+    }
+
+    private sealed class ThrowingBookingService : IBookingService
+    {
+        public Task<BookingResponse> CreateAsync(CreateBookingRequest request)
+        {
+            throw new Exception("Test unexpected exception");
+        }
+
+        public Task<BookingResponse?> GetByIdAsync(Guid bookingId)
+        {
+            throw new NotImplementedException();
         }
     }
 

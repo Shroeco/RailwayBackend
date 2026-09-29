@@ -15,8 +15,6 @@ public sealed class GlobalExceptionHandler : IExceptionHandler
 
     public async ValueTask<bool> TryHandleAsync(HttpContext httpContext, Exception exception, CancellationToken cancellationToken)
     {
-        _logger.LogError(exception, "Unhandled application exception.");
-
         var statusCode = exception switch
         {
             ResourceNotFoundException => StatusCodes.Status404NotFound,
@@ -27,16 +25,32 @@ public sealed class GlobalExceptionHandler : IExceptionHandler
             _ => StatusCodes.Status500InternalServerError
         };
 
+        var correlationId = httpContext.Items["CorrelationId"]?.ToString() ?? "unknown";
+
+        if (statusCode >= StatusCodes.Status500InternalServerError)
+        {
+            _logger.LogError(exception, "Unhandled application exception. CorrelationId={CorrelationId}", correlationId);
+        }
+        else
+        {
+            _logger.LogWarning("Request failed with {StatusCode}: {ExceptionType}. CorrelationId={CorrelationId}", statusCode, exception.GetType().Name, correlationId);
+        }
+
         httpContext.Response.StatusCode = statusCode;
 
         var problemDetails = new ProblemDetails
         {
             Status = statusCode,
             Title = GetTitle(statusCode),
-            Detail = statusCode == StatusCodes.Status500InternalServerError ? "An unexpected error occured." : exception.Message
+            Detail = statusCode == StatusCodes.Status500InternalServerError ? "An unexpected error occurred." : exception.Message
         };
 
-        await httpContext.Response.WriteAsJsonAsync(problemDetails, cancellationToken);
+        if (!string.IsNullOrWhiteSpace(correlationId))
+        {
+            problemDetails.Extensions["correlationId"] = correlationId;
+        }
+
+        await httpContext.Response.WriteAsJsonAsync( problemDetails, cancellationToken);
 
         return true;
     }
