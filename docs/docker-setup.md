@@ -87,6 +87,7 @@ Example `.env` configuration:
 POSTGRES_DB=railway
 POSTGRES_USER=railway
 POSTGRES_PASSWORD=your_local_password
+```
 
 ## Docker Compose Commands
 

@@ -6,7 +6,7 @@ The Railway backend uses automated tests across the domain, application, infrast
 
 The goal is to verify business rules in isolation while also testing the behaviour of the complete application against a real PostgreSQL database.
 
-The test suite currently contains 83 tests across four test projects:
+The test suite currently contains 85 tests across four test projects:
 
 - `Railway.Domain.Tests`
 - `Railway.Application.Tests`
@@ -88,9 +88,37 @@ The API tests cover:
 - invalid requests;
 - `404 Not Found`;
 - `409 Conflict`;
-- `ProblemDetails` error responses.
+- `ProblemDetails` error responses;
+- correlation ID propagation;
+- expected error observability;
+- safe handling of unexpected `500 Internal Server Error` responses.
 
 Where appropriate, tests verify both the HTTP response and the resulting state in PostgreSQL using a fresh database context.
+
+## Error Observability Testing
+
+The API test suite verifies the production error-handling behaviour introduced as part of the application's observability work.
+
+A handled invalid booking request is tested with a caller-supplied `X-Correlation-ID`.
+
+The test verifies that:
+
+- the request returns `400 Bad Request`;
+- the supplied correlation ID is returned in the response header;
+- the response uses `ProblemDetails`;
+- the response contains the expected validation message;
+- the same correlation ID is included in the `ProblemDetails` extensions.
+
+Unexpected exceptions are tested separately by replacing the booking service with a controlled test implementation that throws an exception.
+
+The test verifies that:
+
+- the API returns `500 Internal Server Error`;
+- the correlation ID is preserved;
+- the client receives the generic message `An unexpected error occurred.`;
+- the original internal exception message is not exposed in the response.
+
+These tests ensure that production failures remain diagnosable through correlation IDs while sensitive implementation details are not leaked to API consumers.
 
 ## Concurrency Testing
 
