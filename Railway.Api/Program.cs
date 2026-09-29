@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
+using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Railway.Infrastructure.Data;
 using Railway.Infrastructure.Data.Seed;
 using Railway.Application.Repositories;
@@ -29,7 +30,7 @@ builder.Services.AddScoped<ICarrierJourneyProvider, LnerJourneyProvider>();
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 builder.Services.AddProblemDetails();
 
-builder.Services.AddHealthChecks().AddCheck<DatabaseHealthCheck>("database");
+builder.Services.AddHealthChecks().AddCheck<DatabaseHealthCheck>( "database", tags: ["ready"]);
 
 builder.Services.AddControllers();
 
@@ -74,6 +75,16 @@ app.UseMiddleware<RequestLoggingMiddleware>();
 app.UseExceptionHandler();
 
 app.MapHealthChecks("/health");
+
+app.MapHealthChecks("/health/live", new HealthCheckOptions
+{
+    Predicate = _ => false
+});
+
+app.MapHealthChecks("/health/ready", new HealthCheckOptions
+{
+    Predicate = healthCheck => healthCheck.Tags.Contains("ready")
+});
 
 app.MapControllers();
 
