@@ -6,11 +6,18 @@ using Railway.Infrastructure.Persistence;
 
 namespace Railway.Infrastructure.Tests;
 
-public class BookingRepositoryTests
+public class BookingRepositoryTests : IClassFixture<PostgresTestFixture>
 {
     // private const string ConnectionString = "Host=localhost;Port=5432;Database=railway;Username=railway;Password=railway_dev_password";
 
-    private static readonly PostgresTestFixture Fixture = new();
+    // private static readonly PostgresTestFixture Fixture = new();
+
+    private readonly PostgresTestFixture _fixture;
+
+    public BookingRepositoryTests(PostgresTestFixture fixture)
+    {
+        _fixture = fixture ?? throw new ArgumentNullException(nameof(fixture));
+    }
 
     [Fact]
     public async Task CreateBookingTransactionAsync_should_persist_booking_and_decrement_available_seats()
@@ -85,12 +92,12 @@ public class BookingRepositoryTests
 
     //     return new RailwayDbContext(options);
     // }
-    private static RailwayDbContext CreateContext()
+    private RailwayDbContext CreateContext()
     {
-        return Fixture.CreateContext();
+        return _fixture.CreateContext();
     }
 
-    private static async Task CleanupAsync(Guid journeyId, Guid originStationId, Guid destinationStationId, Guid? customerId = null)
+    private async Task CleanupAsync(Guid journeyId, Guid originStationId, Guid destinationStationId, Guid? customerId = null)
     {
         await using var context = CreateContext();
 
@@ -286,7 +293,7 @@ public class BookingRepositoryTests
     [Fact]
     public async Task Test_database_should_be_available()
     {
-        await Fixture.EnsureDatabaseAvailableAsync();
+        await _fixture.EnsureDatabaseAvailableAsync();
     }
 
     [Fact]

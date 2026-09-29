@@ -4,11 +4,18 @@ using Railway.Infrastructure.Data;
 
 namespace Railway.Infrastructure.Tests;
 
-public class ConcurrencyTests
+public class ConcurrencyTests : IClassFixture<PostgresTestFixture>
 {
     // private const string ConnectionString = "Host=localhost;Port=5432;Database=railway;Username=railway;Password=railway_dev_password";
 
-    private static readonly PostgresTestFixture Fixture = new();
+    // private static readonly PostgresTestFixture Fixture = new();
+
+    private readonly PostgresTestFixture _fixture;
+
+    public ConcurrencyTests(PostgresTestFixture fixture)
+    {
+         _fixture = fixture ?? throw new ArgumentNullException(nameof(fixture));
+    }
 
     [Fact]
     public async Task Concurrent_updates_to_same_journey_should_raise_concurrency_exception()
@@ -74,8 +81,8 @@ public class ConcurrencyTests
     //     return new RailwayDbContext(options);
     // }
 
-    private static RailwayDbContext CreateContext()
+    private RailwayDbContext CreateContext()
     {
-        return Fixture.CreateContext();
+        return _fixture.CreateContext();
     }
 }

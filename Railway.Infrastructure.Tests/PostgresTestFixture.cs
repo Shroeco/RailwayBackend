@@ -3,9 +3,19 @@ using Railway.Infrastructure.Data;
 
 namespace Railway.Infrastructure.Tests;
 
-public sealed class PostgresTestFixture
+public sealed class PostgresTestFixture : IAsyncLifetime
 {
     private static readonly string ConnectionString = Environment.GetEnvironmentVariable("ConnectionStrings__RailwayDatabase") ?? "Host=localhost;Port=5432;Database=railway;Username=railway;Password=railway_dev_password";
+
+    public async Task InitializeAsync()
+    {
+        await EnsureDatabaseAvailableAsync();
+    }
+
+    public Task DisposeAsync()
+    {
+        return Task.CompletedTask;
+    }
 
     public async Task EnsureDatabaseAvailableAsync()
     {
