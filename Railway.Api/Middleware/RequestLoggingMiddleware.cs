@@ -25,7 +25,9 @@ public sealed class RequestLoggingMiddleware
         {
             stopwatch.Stop();
 
-            _logger.LogInformation("HTTP {Method} {Path} responded {StatusCode} in {ElapsedMilliseconds} ms", context.Request.Method, context.Request.Path, context.Response.StatusCode, stopwatch.ElapsedMilliseconds);
+            var logLevel = context.Response.StatusCode >= 500 ? LogLevel.Error : LogLevel.Information;
+
+            _logger.Log(logLevel, "HTTP {Method} {Path}{QueryString} responded {StatusCode} in {ElapsedMilliseconds} ms", context.Request.Method, context.Request.Path, context.Request.QueryString, context.Response.StatusCode, stopwatch.ElapsedMilliseconds);
         }
     }
 }
