@@ -9,6 +9,7 @@ using Railway.Infrastructure.Carriers.Avanti;
 using Railway.Infrastructure.Carriers.Lner;
 using Railway.Api.ExceptionHandling;
 using Railway.Api.Middleware;
+using Railway.Api.HealthChecks;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -27,6 +28,8 @@ builder.Services.AddScoped<ICarrierJourneyProvider, LnerJourneyProvider>();
 
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 builder.Services.AddProblemDetails();
+
+builder.Services.AddHealthChecks().AddCheck<DatabaseHealthCheck>("database");
 
 builder.Services.AddControllers();
 
@@ -62,11 +65,13 @@ if (app.Environment.IsDevelopment())
     });
 }
 
-app.UseHttpsRedirection();
+// app.UseHttpsRedirection();
 
 app.UseMiddleware<RequestLoggingMiddleware>();
 
 app.UseExceptionHandler();
+
+app.MapHealthChecks("/health");
 
 app.MapControllers();
 

@@ -33,7 +33,7 @@ public sealed class GlobalExceptionHandler : IExceptionHandler
         {
             Status = statusCode,
             Title = GetTitle(statusCode),
-            Detail = exception.Message
+            Detail = statusCode == StatusCodes.Status500InternalServerError ? "An unexpected error occured." : exception.Message
         };
 
         await httpContext.Response.WriteAsJsonAsync(problemDetails, cancellationToken);
