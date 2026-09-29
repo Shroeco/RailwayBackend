@@ -25,9 +25,11 @@ public sealed class RequestLoggingMiddleware
         {
             stopwatch.Stop();
 
+            var correlationId = context.Response.Headers["X-Correlation-ID"].ToString();
+
             var logLevel = context.Response.StatusCode >= 500 ? LogLevel.Error : LogLevel.Information;
 
-            _logger.Log(logLevel, "HTTP {Method} {Path}{QueryString} responded {StatusCode} in {ElapsedMilliseconds} ms", context.Request.Method, context.Request.Path, context.Request.QueryString, context.Response.StatusCode, stopwatch.ElapsedMilliseconds);
+            _logger.Log(logLevel, "HTTP {Method} {Path}{QueryString} responded {StatusCode} in {ElapsedMilliseconds} ms CorrelationId={CorrelationId}", context.Request.Method, context.Request.Path, context.Request.QueryString, context.Response.StatusCode, stopwatch.ElapsedMilliseconds, correlationId);
         }
     }
 }
