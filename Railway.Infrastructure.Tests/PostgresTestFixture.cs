@@ -15,6 +15,8 @@ public sealed class PostgresTestFixture
         {
             throw new InvalidOperationException("The PostgreSQL integration-test database is unavailable.");
         }
+
+        await context.Database.MigrateAsync();
     }
 
     public RailwayDbContext CreateContext()
